@@ -1,0 +1,133 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>홍보포스터 갤러리</title>
+  <style>
+    :root{--gap:12px;--thumb:140px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Apple SD Gothic Neo,Noto Sans KR,sans-serif;background:#0b0b0c;color:#f3f4f6}
+    header{position:sticky;top:0;background:rgba(11,11,12,.8);backdrop-filter:saturate(1.2) blur(10px);border-bottom:1px solid #232327;z-index:10}
+    .wrap{max-width:1100px;margin:0 auto;padding:14px 16px}
+    h1{font-size:18px;margin:0}
+    .grid{display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fill,minmax(var(--thumb),1fr));padding:18px 16px}
+    .card{position:relative;border-radius:16px;overflow:hidden;background:#141417;border:1px solid #232327}
+    .card img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:1/1;filter:saturate(1.05)}
+    .card .cap{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;font-size:12px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.7));opacity:.95}
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center}
+    .lightbox.open{display:flex}
+    .viewer{position:relative;max-width:100vw;max-height:100vh;padding:0 60px}
+    .viewer img{max-width:100%;max-height:85vh;display:block;margin:auto}
+    .ctrl{position:absolute;top:50%;transform:translateY(-50%);font-size:28px;line-height:1;border:none;background:transparent;color:#fff;opacity:.85;cursor:pointer;padding:12px}
+    .prev{left:10px}
+    .next{right:10px}
+    .close{position:absolute;top:10px;right:10px;border:none;background:#111;border:1px solid #333;color:#fff;padding:10px 12px;border-radius:10px;cursor:pointer}
+    .idx{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:12px;opacity:.8;background:#111;border:1px solid #333;padding:6px 10px;border-radius:999px}
+    @media (max-width:640px){:root{--thumb:120px}.viewer{padding:0 44px}.ctrl{font-size:22px;padding:10px}.close{padding:8px 10px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>홍보포스터 갤러리</h1>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p style="opacity:.8;margin:10px 2px 0">이미지를 탭하면 크게 볼 수 있어요. 좌우 스와이프/탭으로 이동.</p>
+  </main>
+
+  <section id="grid" class="grid" aria-label="사진 그리드"></section>
+
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <div class="viewer">
+      <button class="ctrl prev" aria-label="이전">◀</button>
+      <img id="big" alt="" />
+      <button class="ctrl next" aria-label="다음">▶</button>
+      <button class="close" aria-label="닫기">닫기</button>
+      <div class="idx" id="idx"></div>
+    </div>
+  </div>
+
+  <script>
+    const IMAGES = [
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-40 001.jpeg",
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-41 002.jpeg",
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-41 003.jpeg",
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-41 004.jpeg",
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-41 005.jpeg",
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-42 006.jpeg",
+      "./assets/KakaoTalk_Photo_2025-09-24-14-13-42 007.jpeg"
+    ];
+    const captionFromFilename = false;
+
+    const grid = document.getElementById('grid');
+    const lb = document.getElementById('lightbox');
+    const big = document.getElementById('big');
+    const idxEl = document.getElementById('idx');
+    const prevBtn = lb.querySelector('.prev');
+    const nextBtn = lb.querySelector('.next');
+    const closeBtn = lb.querySelector('.close');
+
+    let i = 0;
+
+    function render(){
+      grid.innerHTML = '';
+      IMAGES.forEach((src, index)=>{
+        const card = document.createElement('button');
+        card.className = 'card';
+        card.setAttribute('aria-label', `이미지 ${index+1} 열기`);
+        card.innerHTML = `<img loading="lazy" src="${src}" alt="" />`;
+        card.addEventListener('click', ()=> openAt(index));
+        grid.appendChild(card);
+      });
+    }
+
+    function openAt(n){
+      if(!IMAGES.length) return;
+      i = (n+IMAGES.length)%IMAGES.length;
+      big.src = IMAGES[i];
+      lb.classList.add('open');
+      lb.setAttribute('aria-hidden','false');
+      updateIdx();
+      const pre = new Image();
+      pre.src = IMAGES[(i+1)%IMAGES.length];
+    }
+
+    function closeLb(){
+      lb.classList.remove('open');
+      lb.setAttribute('aria-hidden','true');
+      big.removeAttribute('src');
+    }
+
+    function next(){ openAt(i+1); }
+    function prev(){ openAt(i-1); }
+    function updateIdx(){ idxEl.textContent = `${i+1} / ${IMAGES.length}`; }
+
+    document.addEventListener('keydown', (e)=>{
+      if(lb.classList.contains('open')){
+        if(e.key==='ArrowRight') next();
+        if(e.key==='ArrowLeft') prev();
+        if(e.key==='Escape') closeLb();
+      }
+    });
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    closeBtn.addEventListener('click', closeLb);
+    lb.addEventListener('click', (e)=>{ if(e.target===lb) closeLb(); });
+
+    let touchX = null;
+    big.addEventListener('touchstart', (e)=>{ touchX = e.changedTouches[0].clientX; }, {passive:true});
+    big.addEventListener('touchend', (e)=>{
+      if(touchX==null) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      if(Math.abs(dx) > 40){ dx<0 ? next() : prev(); }
+      touchX = null;
+    }, {passive:true});
+
+    render();
+  </script>
+</body>
+</html>
